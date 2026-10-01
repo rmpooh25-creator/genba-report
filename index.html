@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>現場作業報告・進捗管理</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --warning: #f59e0b;
+      --success: #10b981;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 12px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h2 { font-size: 1.2rem; margin-top: 20px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+    .badge { background: var(--warning); color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .card.uncomplete { border-left: 5px solid var(--warning); }
+    .card.complete { border-left: 5px solid var(--success); opacity: 0.7; }
+    .card-title { font-weight: bold; font-size: 1rem; margin-bottom: 4px; }
+    .card-sub { font-size: 0.85rem; color: #64748b; margin-bottom: 6px; }
+    .card-detail { font-size: 0.9rem; margin-bottom: 4px; }
+    .btn {
+      display: inline-block;
+      width: 100%;
+      padding: 10px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      width: auto;
+      background: var(--success);
+    }
+    form { display: flex; flex-direction: column; gap: 10px; }
+    label { font-size: 0.85rem; font-weight: bold; color: #475569; margin-bottom: 2px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+    }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 8px; }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: #f1f5f9;
+      padding: 6px 10px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: normal;
+      cursor: pointer;
+    }
+    .checkbox-label input { width: auto; }
+  </style>
+</head>
+<body>
+
+  <h2>未完了の現場 <span id="uncomplete-count" class="badge">0件</span></h2>
+  <div id="uncomplete-list">読み込み中...</div>
+
+  <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border);">
+
+  <h2>現場報告の新規登録</h2>
+  <form id="report-form" class="card">
+    <div>
+      <label>ステータス</label>
+      <select id="status">
+        <option value="未完了">未完了（現場残あり）</option>
+        <option value="完了" selected>完了</option>
+        <option value="移動中・対応予定">移動中・対応予定</option>
+      </select>
+    </div>
+
+    <div>
+      <label>ハウスメーカー / 元請</label>
+      <input type="text" id="maker" placeholder="例: 一条工務店, リアワークス">
+    </div>
+
+    <div>
+      <label>現場住所 / 施主名</label>
+      <input type="text" id="address" placeholder="例: 町田市南ヶ丘7-31-12 黒澤様邸">
+    </div>
+
+    <div>
+      <label>監督名</label>
+      <input type="text" id="director" placeholder="例: 伊藤監督">
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+      <div style="flex: 1;">
+        <label>人工（にんく）</label>
+        <select id="ninku">
+          <option value="0.5人工">0.5人工</option>
+          <option value="1人工" selected>1人工</option>
+          <option value="1.5人工">1.5人工</option>
+          <option value="2人工">2人工</option>
+          <option value="その他">その他</option>
+        </select>
+      </div>
+      <div style="flex: 1;">
+        <label>作業時間 / 勤務時間</label>
+        <input type="text" id="workTime" placeholder="例: 8:30〜16:00 (5.5時間)">
+      </div>
+    </div>
+
+    <div>
+      <label>確認・完了項目</label>
+      <div class="checkbox-group">
+        <label class="checkbox-label"><input type="checkbox" name="chk" value="監督連絡済"> 監督連絡済</label>
+        <label class="checkbox-label"><input type="checkbox" name="chk" value="資料持ち帰り"> 資料持ち帰り</label>
+        <label class="checkbox-label"><input type="checkbox" name="chk" value="写真添付済"> 写真添付済</label>
+        <label class="checkbox-label"><input type="checkbox" name="chk" value="メッセージ送信済"> メッセージ送信済</label>
+      </div>
+    </div>
+
+    <div>
+      <label>作業担当者</label>
+      <input type="text" id="worker" placeholder="例: 今泉, ラム">
+    </div>
+
+    <div>
+      <label>メモ・連絡事項</label>
+      <textarea id="memo" rows="2" placeholder="向かいます、残り項目など"></textarea>
+    </div>
+
+    <button type="submit" class="btn" id="submit-btn">送信する</button>
+  </form>
+
+  <h2>最近の報告履歴</h2>
+  <div id="history-list">読み込み中...</div>
+
+  <script>
+    // 発行されたGASウェブアプリURLをセット済みです
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbw4rEneyOgRQwhGP4WA8VOZ1o2kL-visZYwD404HeprNdk1g7oSCZ0AviEAC5Jl-FCHjA/exec"; 
+
+    async function fetchReports() {
+      try {
+        const res = await fetch(GAS_URL);
+        const data = await res.json();
+        renderData(data);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderData(data) {
+      const uncompleteContainer = document.getElementById("uncomplete-list");
+      const historyContainer = document.getElementById("history-list");
+      
+      uncompleteContainer.innerHTML = "";
+      historyContainer.innerHTML = "";
+
+      const uncompletes = data.filter(item => item["ステータス"] === "未完了");
+      document.getElementById("uncomplete-count").textContent = `${uncompletes.length}件`;
+
+      if (uncompletes.length === 0) {
+        uncompleteContainer.innerHTML = "<p style='color:#64748b; font-size:0.9rem;'>現在、未完了の現場はありません。</p>";
+      } else {
+        uncompletes.forEach(item => {
+          uncompleteContainer.appendChild(createCard(item, true));
+        });
+      }
+
+      const recent = [...data].reverse().slice(0, 10);
+      recent.forEach(item => {
+        historyContainer.appendChild(createCard(item, false));
+      });
+    }
+
+    function createCard(item, isUncompleteSection) {
+      const card = document.createElement("div");
+      const isDone = item["ステータス"] === "完了";
+      card.className = `card ${isDone ? 'complete' : 'uncomplete'}`;
+
+      let html = `
+        <div class="card-title">${item["メーカー"] || '現場'} - ${item["住所・施主"] || ''}</div>
+        <div class="card-sub">監督: ${item["監督"] || '-'} | 担当: ${item["担当者"] || '-'}</div>
+        <div class="card-detail"><strong>人工:</strong> ${item["人工"]} | <strong>時間:</strong> ${item["作業時間"] || '-'}</div>
+        <div class="card-detail"><strong>状態:</strong> ${item["チェック項目"] || 'なし'}</div>
+      `;
+
+      if (item["メモ"]) {
+        html += `<div class="card-detail" style="color:#64748b;">📝 ${item["メモ"]}</div>`;
+      }
+
+      if (isUncompleteSection) {
+        html += `<div style="margin-top:8px; text-align:right;">
+          <button class="btn btn-sm" onclick="markComplete('${item["ID"]}')">完了にする</button>
+        </div>`;
+      }
+
+      card.innerHTML = html;
+      return card;
+    }
+
+    async function markComplete(id) {
+      if (!confirm("この現場を「完了」に更新しますか？")) return;
+      await fetch(GAS_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "updateStatus", id: id, status: "完了" })
+      });
+      fetchReports();
+    }
+
+    document.getElementById("report-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("submit-btn");
+      btn.disabled = true;
+      btn.textContent = "送信中...";
+
+      const checks = Array.from(document.querySelectorAll('input[name="chk"]:checked')).map(c => c.value).join(", ");
+
+      const payload = {
+        action: "add",
+        status: document.getElementById("status").value,
+        maker: document.getElementById("maker").value,
+        address: document.getElementById("address").value,
+        director: document.getElementById("director").value,
+        ninku: document.getElementById("ninku").value,
+        workTime: document.getElementById("workTime").value,
+        checks: checks,
+        worker: document.getElementById("worker").value,
+        memo: document.getElementById("memo").value
+      };
+
+      await fetch(GAS_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+
+      btn.disabled = false;
+      btn.textContent = "送信する";
+      document.getElementById("report-form").reset();
+      fetchReports();
+    });
+
+    fetchReports();
+  </script>
+</body>
+</html>
